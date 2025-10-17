@@ -11,7 +11,7 @@ import io
 import os
 
 # Configuration
-INPUT_FILE = "/PATH/TO/YOUR/fcd_out.parquet"
+INPUT_FILE = "public/fcd_out.parquet"
 OUTPUT_FILE = "public/trips.feather.gz"
 
 # Optional: Sample only a subset of vehicles for better performance
