@@ -16,7 +16,7 @@ OUTPUT_FILE = "public/trips.feather.gz"
 
 # Optional: Sample only a subset of vehicles for better performance
 # Set to None to process all vehicles, or set a number like 1000 to sample
-SAMPLE_VEHICLES = None  # Change to 1000, 5000, etc. to limit vehicle count
+SAMPLE_VEHICLES = 100  # Change to 1000, 5000, etc. to limit vehicle count
 
 print("Reading FCD parquet file...")
 df = pd.read_parquet(INPUT_FILE)
@@ -56,6 +56,7 @@ speeds = np.zeros(coord_num, dtype=np.float32)
 edges = []  # Store edge IDs as strings
 positions = np.zeros(coord_num, dtype=np.float32)  # Position on edge
 relative_speeds = np.zeros(coord_num, dtype=np.float32)  # Relative speed
+angles = np.zeros(coord_num, dtype=np.float32)  # Vehicle orientation angle
 
 # Store vehicle attributes (one per vehicle/trip)
 vehicle_ids = []
@@ -99,6 +100,14 @@ for i, (vehicle_id, group) in enumerate(grouped):
         # Default to 0.5 (mid-range) if column not found
         relative_speeds[current_offset:current_offset + num_positions] = 1.0
     
+    # Store vehicle angles (orientation)
+    # SUMO angle is in degrees, 0 = North, 90 = East, 180 = South, 270 = West
+    if 'vehicle_angle' in group.columns:
+        angles[current_offset:current_offset + num_positions] = group['vehicle_angle'].values
+    else:
+        # Default to 0 (facing north) if column not found
+        angles[current_offset:current_offset + num_positions] = 0.0
+    
     # Store vehicle attributes
     vehicle_ids.append(str(vehicle_id))
     
@@ -128,8 +137,9 @@ speeds_arr = pa.ListArray.from_arrays(pa.array(offsets), speeds)
 edges_arr = pa.ListArray.from_arrays(pa.array(offsets), pa.array(edges))
 positions_arr = pa.ListArray.from_arrays(pa.array(offsets), positions)
 relative_speeds_arr = pa.ListArray.from_arrays(pa.array(offsets), relative_speeds)
+angles_arr = pa.ListArray.from_arrays(pa.array(offsets), angles)
 
-# Create Arrow table with geometry, timestamps, speeds, edges, positions, relative speeds, and vehicle attributes
+# Create Arrow table with geometry, timestamps, speeds, edges, positions, relative speeds, angles, and vehicle attributes
 table = pa.table({
     "geometry": linestrings_arr,
     "timestamps": timestamp_arr,
@@ -137,6 +147,7 @@ table = pa.table({
     "edges": edges_arr,
     "positions": positions_arr,
     "relative_speeds": relative_speeds_arr,
+    "angles": angles_arr,
     "vehicle_id": pa.array(vehicle_ids)
 })
 

@@ -8,7 +8,9 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@deck.gl/mesh-layers": "^9.2.1",
     "@geoarrow/deck.gl-layers": "*",
+    "@loaders.gl/gltf": "^4.0.0",
     "apache-arrow": ">=14",
     "deck.gl": "^9.2.1",
     "react": "^18.0.0",
